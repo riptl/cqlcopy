@@ -261,6 +261,7 @@ func (b *writeBatcher) next(row []csv.Column) {
 				log.Printf("Aborting after %d insert errors", totalErrs)
 			}
 		}
+		b.batch = nil
 	}
 }
 
@@ -271,6 +272,7 @@ func (b *writeBatcher) commit() bool {
 			atomic.AddInt64(&b.inserted, int64(len(b.batch.Entries)))
 			return true
 		}
+		log.Print(err)
 		time.Sleep(backoff)
 	}
 	log.Printf("Giving up after %d failed insert attempts: %s", maxAttempts, err)
