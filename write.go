@@ -48,8 +48,8 @@ func init() {
 	f.StringVar(&nullValue, FlagNull, "NULL", "Special unquoted literal marking a null value")
 	f.Uint(FlagNumProcesses, 8, "Number of worker processes (goroutines)")
 	f.DurationVar(&reportInterval, FlagReportFrequency, 250*time.Millisecond, "Frequency with which status is displayed")
-	f.Uint(FlagChunkSize, 1000, "Number of items in an import batch")
-	f.UintVar(&maxBatchSize, FlagMaxBatchSize, 20, "Maximum size of an import batch in kB")
+	f.UintVar(&chunkSize, FlagChunkSize, 1000, "Number of items in an import batch")
+	f.Int64Var(&maxBatchSize, FlagMaxBatchSize, 20, "Maximum size of an import batch in kB")
 	f.Int32Var(&maxInsertErrors, FlagMaxInsertErrors, -1, "Maximum number of batch insert errors (Negative value: no maximum)")
 	f.Int(FlagMaxParseErrors, -1, "Maximum number of parsing errors (Negative value: no maximum)")
 }
@@ -57,7 +57,8 @@ func init() {
 var (
 	maxAttempts     uint
 	maxInsertErrors int32
-	maxBatchSize    uint
+	chunkSize       uint
+	maxBatchSize    int64
 	nullValue       string
 	reportInterval  time.Duration
 	timeFormat      string
@@ -235,16 +236,21 @@ func (w *writeCtx) parseValue(s csv.Column) interface{} {
 
 type writeBatcher struct {
 	*writeCtx
-	batch *cql.Batch
+	batch     *cql.Batch
+	batchSize int64
 }
 
 func (b *writeBatcher) next(row []csv.Column) {
 	if b.batch == nil {
 		// Create new batch
 		b.batch = b.session.NewBatch(cql.UnloggedBatch)
+		b.batchSize = 0
 	}
 	b.batch.Query(b.stmt, b.parseValues(row)...)
-	if uint(len(b.batch.Entries)) >= maxBatchSize {
+	for _, col := range row {
+		b.batchSize += int64(len(col.Value))
+	}
+	if uint(len(b.batch.Entries)) >= chunkSize || b.batchSize/1000 >= maxBatchSize {
 		// Commit batch
 		if !b.commit() {
 			totalErrs := atomic.AddInt32(&b.errCount, 1)
