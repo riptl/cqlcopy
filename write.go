@@ -37,6 +37,7 @@ const (
 	FlagMaxBatchSize    = "max-batch-size"
 	FlagMaxInsertErrors = "max-insert-errors"
 	FlagMaxParseErrors  = "max-parse-errors"
+	FlagBackoff         = "backoff"
 )
 
 func init() {
@@ -52,6 +53,7 @@ func init() {
 	f.Int64Var(&maxBatchSize, FlagMaxBatchSize, 20, "Maximum size of an import batch in kB")
 	f.Int32Var(&maxInsertErrors, FlagMaxInsertErrors, -1, "Maximum number of batch insert errors (Negative value: no maximum)")
 	f.Int(FlagMaxParseErrors, -1, "Maximum number of parsing errors (Negative value: no maximum)")
+	f.DurationVar(&backoff, FlagBackoff, time.Second, "Duration to wait after an error")
 }
 
 var (
@@ -61,6 +63,7 @@ var (
 	maxBatchSize    int64
 	nullValue       string
 	reportInterval  time.Duration
+	backoff         time.Duration
 	timeFormat      string
 )
 
@@ -268,6 +271,7 @@ func (b *writeBatcher) commit() bool {
 			atomic.AddInt64(&b.inserted, int64(len(b.batch.Entries)))
 			return true
 		}
+		time.Sleep(backoff)
 	}
 	log.Printf("Giving up after %d failed insert attempts: %s", maxAttempts, err)
 	return false
