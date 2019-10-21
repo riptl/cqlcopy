@@ -267,7 +267,7 @@ func (b *writeBatcher) next(row []csv.Column) {
 
 func (b *writeBatcher) commit() bool {
 	var err error
-	for i := uint(0); i < maxAttempts; i++ {
+	for i := uint(0); i == 0 || i < maxAttempts; i++ {
 		if err = b.session.ExecuteBatch(b.batch); err == nil {
 			atomic.AddInt64(&b.inserted, int64(len(b.batch.Entries)))
 			return true
