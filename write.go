@@ -25,26 +25,11 @@ var writeCmd = cobra.Command{
 	Run:   runWriteCmd,
 }
 
-const (
-	FlagBoolStyle       = "bool-style"
-	FlagTimeFormat      = "time-format"
-	FlagHeader          = "header"
-	FlagMaxAttempts     = "max-attempts"
-	FlagNull            = "null"
-	FlagNumProcesses    = "num-processes"
-	FlagReportFrequency = "report-frequency"
-	FlagChunkSize       = "chunk-size"
-	FlagMaxBatchSize    = "max-batch-size"
-	FlagMaxInsertErrors = "max-insert-errors"
-	FlagMaxParseErrors  = "max-parse-errors"
-	FlagBackoff         = "backoff"
-)
-
 func init() {
 	f := writeCmd.Flags()
 	f.String(FlagBoolStyle, "true,false", "Boolean indicators for true and false (case-insensitive)")
 	f.StringVar(&timeFormat, FlagTimeFormat, "2006-01-02 15:04:05-0700", "Timestamp format")
-	f.Bool(FlagHeader, false, "First row contains column names")
+	f.Bool(FlagHeader, true, "First row contains column names")
 	f.UintVar(&maxAttempts, FlagMaxAttempts, 5, "Max attempts (Zero means infinite)")
 	f.StringVar(&nullValue, FlagNull, "NULL", "Special unquoted literal marking a null value")
 	f.Uint(FlagNumProcesses, 8, "Number of worker processes (goroutines)")

@@ -31,7 +31,12 @@ const (
 )
 
 func init() {
-	app.AddCommand(&writeCmd)
+	app.AddCommand(
+		&writeCmd,
+		&readCmd,
+		//&ssTableCmd,
+	)
+	app.AddCommand()
 	p := app.PersistentFlags()
 	p.StringSliceP(FlagConnect, "c", []string{"localhost:9042"}, "Node CQL addresses")
 	p.StringP(FlagKeyspace, "k", "", "Default keyspace")

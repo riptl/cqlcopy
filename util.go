@@ -1,6 +1,9 @@
 package main
 
 func checkIdentifier(n string) bool {
+	if len(n) == 0 {
+		return false
+	}
 	for _, r := range n {
 		switch {
 		case r >= '0' && r <= '9':
